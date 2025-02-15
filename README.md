@@ -83,4 +83,4 @@ python arkanoid.py
 | v0.5  | 多关卡系统 + BOSS战模式            | ★★★☆  |
 | v1.0  | 添加网络排行榜功能                 | ★★☆☆  |
 
-(此项目由deepseek生成)
+### (此项目由deepseek生成)
