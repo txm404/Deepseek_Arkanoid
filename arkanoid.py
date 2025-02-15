@@ -55,7 +55,7 @@ def reset_game():
     # 游戏状态
     game_over = False
     score = 0
-    lives = 1
+    lives = 3
 ball_speed_x = 0  # 初始值
 ball_speed_y = 0  # 初始值
 reset_game()  # 初始化游戏
