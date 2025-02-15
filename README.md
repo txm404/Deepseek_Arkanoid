@@ -4,7 +4,7 @@
 - **名称**：打砖块（Arkanoid）
 - **类型**：2D 街机类游戏
 - **框架**：Pygame Zero (Python 3.7+)
-- **目标平台**：Windows/macOS/Linux
+- **目标平台**：Windows
 
 ## 🎮 核心功能
 ### 基础玩法
