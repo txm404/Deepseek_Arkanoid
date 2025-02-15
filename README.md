@@ -69,7 +69,7 @@ python arkanoid.py
 
 ## 🐛 已知问题记录
 ### 异常处理清单
-```python
+python
 # 问题1: 局部变量作用域冲突
 - 现象: UnboundLocalError: score undefined
 - 修复: 使用 global 显式声明全局变量
