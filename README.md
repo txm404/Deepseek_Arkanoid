@@ -1,4 +1,4 @@
-arkanoid_pygame.py - 简单的打砖块游戏
+# arkanoid_pygame.py - 简单的打砖块游戏
 
 这是一个使用 Pygame 库创建的经典打砖块游戏的简单实现。
 玩家控制一个挡板来反弹小球，击碎屏幕上方的砖块。
