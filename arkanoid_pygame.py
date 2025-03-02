@@ -14,7 +14,9 @@ COLORS = [
     (255, 165, 0),  # 橙
     (255, 255, 0),  # 黄
     (0, 255, 0),  # 绿
-    (0, 0, 255)  # 蓝
+    (0, 0, 255),  # 蓝
+    (0, 128, 255), # 青色
+    (138, 43, 226) # 紫色
 ]
 
 class Brick:
@@ -22,9 +24,18 @@ class Brick:
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
         self.durability = durability
+        self.original_color = color # 存储原始颜色
 
     def draw(self, screen, font):
-        pygame.draw.rect(screen, self.color, self.rect)
+        # 绘制砖块边框
+        border_color = (max(0, self.color[0] - 40), max(0, self.color[1] - 40), max(0, self.color[2] - 40))
+        pygame.draw.rect(screen, border_color, self.rect, border_radius=5)
+
+        # 绘制砖块内部，稍微缩小一点以显示边框
+        inner_rect = self.rect.inflate(-4, -4)
+        pygame.draw.rect(screen, self.color, inner_rect, border_radius=5)
+
+        # 显示耐久度
         text_surface = font.render(str(self.durability), True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
@@ -33,28 +44,36 @@ class Paddle:
     def __init__(self, x, y, width, height, speed):
         self.rect = pygame.Rect(x, y, width, height)
         self.speed = speed
+        self.color = (0, 180, 255) # 初始颜色
+        self.original_color = self.color
 
     def move_left(self):
         self.rect.x = max(0, self.rect.x - self.speed)
+        self.color = (0, 100, 200)
 
     def move_right(self, width):
         self.rect.x = min(width - self.rect.width, self.rect.x + self.speed)
+        self.color = (0, 100, 200)
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (0, 255, 255), self.rect)
+        # 绘制圆角矩形
+        pygame.draw.rect(screen, self.color, self.rect, border_radius=5)
+        self.color = self.original_color # 恢复颜色
 
 class Ball:
     def __init__(self, x, y, size, speed_x, speed_y):
         self.rect = pygame.Rect(x, y, size, size)
         self.speed_x = speed_x
         self.speed_y = speed_y
+        self.color = (200, 200, 200)
 
     def move(self):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
 
     def draw(self, screen):
-        pygame.draw.rect(screen, (255, 255, 255), self.rect)
+        # 绘制圆形
+        pygame.draw.circle(screen, self.color, self.rect.center, self.rect.width // 2)
 
     def bounce_x(self):
         self.speed_x *= -1
@@ -84,7 +103,11 @@ class HighScoreManager:
             json.dump(high_scores, f)
             
     def show_high_scores(self, screen, width, height):
-        screen.fill((0, 0, 0))
+        # 渐变背景
+        for i in range(height):
+            color = (0, 0, int(i / height * 50))  # 从深蓝到黑的渐变
+            pygame.draw.line(screen, color, (0, i), (width, i))
+
         title_font = pygame.font.SysFont("simhei", 55)
         title_text = title_font.render("历史得分榜", True, (255, 255, 255))
         title_rect = title_text.get_rect(center=(width // 2, 100))
@@ -98,16 +121,21 @@ class HighScoreManager:
             text = f"{i + 1}. {entry['name']}: {entry['score']}"
             score_text = score_font.render(text, True, (255, 255, 255))
             score_rect = score_text.get_rect(center=(width // 2, y))
+             # 绘制背景
+            pygame.draw.rect(screen, (0, 0, 50), score_rect.inflate(20, 10), border_radius=10)
             screen.blit(score_text, score_rect)
+           
             y += 50
 
         back_text = score_font.render("按 B 键返回主菜单, 按 C 键清除排行榜", True, (255, 0, 0))
         back_rect = back_text.get_rect(center=(width // 2, height - 70))
+        pygame.draw.rect(screen, (50, 0, 0), back_rect.inflate(20, 10), border_radius=10)
         screen.blit(back_text, back_rect)
 
         if not high_scores:
             empty_text = score_font.render("排行榜为空", True, (255,255,255))
             empty_rect = empty_text.get_rect(center=(width//2, height//2))
+            pygame.draw.rect(screen, (50, 50, 50), empty_rect.inflate(20, 10), border_radius=10)
             screen.blit(empty_text, empty_rect)
 
         pygame.display.flip()
@@ -124,12 +152,14 @@ class Game:
         self.width = width
         self.height = height
         self.paddle_speed = 8
-        self.brick_rows = 5
+        self.brick_rows = 7 # 增加砖块行数
         self.brick_cols = 10
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("打砖块")
-        self.font = pygame.font.SysFont("simhei", 17)
-        self.game_over_font = pygame.font.SysFont("simhei", 40)
+        self.font = pygame.font.SysFont("simhei", 22) # 使用更现代的字体
+        self.score_font = pygame.font.SysFont("simhei", 30)
+        self.lives_font = pygame.font.SysFont("simhei", 30)
+        self.game_over_font = pygame.font.SysFont("simhei", 48)
         self.reset_game(reset_score=True)
         self.game_state = GAME_STATE_MENU
         self.selected_option = 0
@@ -193,7 +223,10 @@ class Game:
         return name
 
     def draw(self):
-        self.screen.fill((0, 0, 0))  # 清屏为黑色
+        # 渐变背景
+        for i in range(self.height):
+            color = (0, 0, int(i / self.height * 50))  # 从深蓝到黑的渐变
+            pygame.draw.line(self.screen, color, (0, i), (self.width, i))
 
         # 绘制挡板
         self.paddle.draw(self.screen)
@@ -206,10 +239,10 @@ class Game:
             brick.draw(self.screen, self.font)
 
         # 显示得分和生命
-        score_text = self.font.render(f"得分: {self.score}", True, (255, 255, 0))
-        lives_text = self.font.render(f"生命: {self.lives}", True, (255, 255, 0))
+        score_text = self.score_font.render(f"得分: {self.score}", True, (255, 255, 0))
+        lives_text = self.lives_font.render(f"生命: {self.lives}", True, (255, 255, 0))
         self.screen.blit(score_text, (10, 10))
-        self.screen.blit(lives_text, (10, 40))  # 稍微向下移动一点
+        self.screen.blit(lives_text, (self.width - 150, 10))  # 生命值显示在右上角
 
         # 游戏结束提示
         if self.game_state == GAME_STATE_GAME_OVER:
@@ -225,6 +258,7 @@ class Game:
             text_rect = game_over_text.get_rect(center=(self.width // 2, self.height // 2))
             self.screen.blit(game_over_text, text_rect)
 
+        pygame.display.flip()  # 更新屏幕
         pygame.display.flip()  # 更新屏幕
 
     def update(self):
@@ -291,23 +325,26 @@ class Game:
             self.high_score_manager.save_high_score(name, self.score)
 
     def show_start_menu(self):
-        self.screen.fill((0, 0, 0))
+        # 渐变背景
+        for i in range(self.height):
+            color = (0, 0, int(i / self.height * 50))  # 从深蓝到黑的渐变
+            pygame.draw.line(self.screen, color, (0, i), (self.width, i))
+
         title_font = pygame.font.SysFont("simhei", 72)
-        title_text = title_font.render("打砖块v1.0.2", True, (255, 255, 255))
+        title_text = title_font.render("打砖块v1.0.3", True, (255, 255, 255))
         title_rect = title_text.get_rect(center=(self.width // 2, self.height // 3))
         self.screen.blit(title_text, title_rect)
 
         instruction_font = pygame.font.SysFont("simhei", 36)
 
         for i, option in enumerate(self.options):
-            if i == 2:  # "查看历史得分榜" 选项
-                text_color = (255, 255, 255)
-            else:
-                text_color = (255, 255, 0) if i == self.selected_option and i == 0 else (255, 0, 0) if i == self.selected_option and i == 1 else (255, 255, 255)
+            text_color = (255, 255, 255)
             if i == self.selected_option:
-                text_color = (0, 0, 255)
+                text_color = (0, 180, 255) # 选中的选项颜色更亮
             text = instruction_font.render(option, True, text_color)
             text_rect = text.get_rect(center=(self.width // 2, self.height // 2 + i * 50))
+            # 绘制选项背景
+            pygame.draw.rect(self.screen, (0, 0, 50), text_rect.inflate(20, 10), border_radius=10)
             self.screen.blit(text, text_rect)
 
         pygame.display.flip()
